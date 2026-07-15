@@ -1,13 +1,21 @@
 import express from 'express'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 3000
 const { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } = process.env
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const distPath = path.join(__dirname, 'dist')
 
 app.use(express.json({ limit: '20kb' }))
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(distPath))
+}
 
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -89,6 +97,12 @@ app.post('/api/contact', async (req, res) => {
     clearTimeout(timeout)
   }
 })
+
+if (process.env.NODE_ENV === 'production') {
+  app.use((_req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
 
 app.listen(PORT, () => {
   console.log(`Server http://localhost:${PORT} manzilida ishga tushdi.`)
